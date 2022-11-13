@@ -1,5 +1,5 @@
 use worker::*;
-use image::ImageOutputFormat;
+use image::{ImageOutputFormat, DynamicImage};
 use std::io::Cursor;
 
 mod utils;
@@ -21,16 +21,21 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    let bytes = std::include_bytes!("../res/icon.jpg");
-    let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
-
-    let img2 = img.resize(200, 200, image::imageops::FilterType::Triangle);
+    let icon = generate_icon();
 
     let mut result_buf: Vec<u8> = Vec::new();
-    img2.write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png).expect("io error");
+    icon.write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png).expect("io error");
 
     let response = Response::from_bytes(result_buf).unwrap();
     let mut headers = Headers::new();
     headers.set("content-type", "image/png")?;
     Ok(response.with_headers(headers))
+}
+
+fn generate_icon() -> DynamicImage {
+  let bytes = std::include_bytes!("../res/icon.jpg");
+  let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
+
+  let img2 = img.resize(200, 200, image::imageops::FilterType::Triangle);
+  img2
 }
