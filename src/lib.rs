@@ -21,7 +21,9 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    let icon = generate_icon();
+    let width: u32 = 200;
+    let height: u32 = 200;
+    let icon = generate_icon(width, height);
 
     let mut result_buf: Vec<u8> = Vec::new();
     icon.write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png).expect("io error");
@@ -32,10 +34,10 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
     Ok(response.with_headers(headers))
 }
 
-fn generate_icon() -> DynamicImage {
+fn generate_icon(width: u32, height: u32) -> DynamicImage {
   let bytes = std::include_bytes!("../res/icon.jpg");
   let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
 
-  let img2 = img.resize(200, 200, image::imageops::FilterType::Triangle);
+  let img2 = img.resize(width, height, image::imageops::FilterType::Triangle);
   img2
 }
