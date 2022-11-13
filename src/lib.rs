@@ -1,5 +1,6 @@
 use serde_json::json;
 use worker::*;
+use image::GenericImageView;
 
 mod utils;
 
@@ -15,7 +16,7 @@ fn log_request(req: &Request) {
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
-    log_request(&req);
+  log_request(&req);
 
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
@@ -49,6 +50,11 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .get("/worker-version", |_, ctx| {
             let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
             Response::ok(version)
+        })
+        .get("/icon", |_, _| {
+          let bytes = std::include_bytes!("../res/icon.jpg");
+          let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
+          Response::ok(format!("dimensions {:?}", img.dimensions()))
         })
         .run(req, env)
         .await
