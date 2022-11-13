@@ -1,6 +1,7 @@
 use serde_json::json;
 use worker::*;
-use image::GenericImageView;
+use image::{GenericImageView, ImageOutputFormat};
+use std::io::Cursor;
 
 mod utils;
 
@@ -54,7 +55,16 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .get("/icon", |_, _| {
           let bytes = std::include_bytes!("../res/icon.jpg");
           let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
-          Response::ok(format!("dimensions {:?}", img.dimensions()))
+
+          let img2 = img.resize(200, 200, image::imageops::FilterType::Triangle);
+
+          let mut result_buf: Vec<u8> = Vec::new();
+          img2.write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png).expect("io error");
+
+          let response = Response::from_bytes(result_buf).unwrap();
+          let mut headers = Headers::new();
+          headers.set("content-type", "image/png")?;
+          Ok(response.with_headers(headers))
         })
         .run(req, env)
         .await
