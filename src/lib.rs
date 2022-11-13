@@ -1,6 +1,7 @@
 use worker::*;
 use image::{ImageOutputFormat, DynamicImage};
 use std::io::Cursor;
+use regex::Regex;
 
 mod utils;
 
@@ -21,8 +22,12 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    let width: u32 = 200;
-    let height: u32 = 200;
+    let re = Regex::new(r"^/apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
+    let path = req.path();
+    let caps = re.captures(&path).unwrap();
+
+    let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
+    let height: u32 = caps.get(3).map_or("60", |m| m.as_str()).parse().unwrap();
     let icon = generate_icon(width, height);
 
     let mut result_buf: Vec<u8> = Vec::new();
