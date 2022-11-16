@@ -39,15 +39,9 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
 
     let icon_img = generate_icon(&icon);
 
-    let mut result_buf: Vec<u8> = Vec::new();
-    icon_img
-        .write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png)
-        .expect("io error");
+    let response = make_response(&icon_img);
 
-    let response = Response::from_bytes(result_buf).unwrap();
-    let mut headers = Headers::new();
-    headers.set("content-type", "image/png")?;
-    Ok(response.with_headers(headers))
+    Ok(response)
 }
 
 fn parse_icon_path(path: &str) -> Result<Icon> {
@@ -88,4 +82,16 @@ fn generate_icon(icon: &Icon) -> DynamicImage {
         image::imageops::FilterType::Triangle,
     );
     img2
+}
+
+fn make_response(icon_img: &DynamicImage) -> Response {
+  let mut result_buf: Vec<u8> = Vec::new();
+  icon_img
+      .write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png)
+      .expect("io error");
+
+  let response = Response::from_bytes(result_buf).unwrap();
+  let mut headers = Headers::new();
+  headers.set("content-type", "image/png");
+  response.with_headers(headers)
 }
