@@ -54,9 +54,9 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
     let height: u32 = caps.get(3).map_or("60", |m| m.as_str()).parse().unwrap();
     let precomposed: bool = caps.get(4).map_or("", |m| m.as_str()) == "-precomposed";
     Ok(Icon {
-        width: width,
-        height: height,
-        precomposed: precomposed,
+        width,
+        height,
+        precomposed,
     })
 }
 
