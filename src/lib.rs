@@ -5,6 +5,12 @@ use worker::*;
 
 mod utils;
 
+struct Icon {
+    width: u32,
+    height: u32,
+    precomposed: bool,
+}
+
 fn log_request(req: &Request) {
     console_log!(
         "{} - [{}], located at: {:?}, within: {}",
@@ -28,10 +34,18 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
 
     let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
     let height: u32 = caps.get(3).map_or("60", |m| m.as_str()).parse().unwrap();
-    let icon = generate_icon(width, height);
+    let precomposed: bool = caps.get(4).map_or("", |m| m.as_str()) == "-precomposed";
+    let icon = Icon {
+        width: width,
+        height: height,
+        precomposed: precomposed,
+    };
+
+    let icon_img = generate_icon(&icon);
 
     let mut result_buf: Vec<u8> = Vec::new();
-    icon.write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png)
+    icon_img
+        .write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png)
         .expect("io error");
 
     let response = Response::from_bytes(result_buf).unwrap();
@@ -40,10 +54,14 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
     Ok(response.with_headers(headers))
 }
 
-fn generate_icon(width: u32, height: u32) -> DynamicImage {
+fn generate_icon(icon: &Icon) -> DynamicImage {
     let bytes = std::include_bytes!("../res/icon.jpg");
     let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
 
-    let img2 = img.resize(width, height, image::imageops::FilterType::Triangle);
+    let img2 = img.resize(
+        icon.width,
+        icon.height,
+        image::imageops::FilterType::Triangle,
+    );
     img2
 }
