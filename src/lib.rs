@@ -28,18 +28,7 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    let re = Regex::new(r"^/apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
-    let path = req.path();
-    let caps = re.captures(&path).unwrap();
-
-    let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
-    let height: u32 = caps.get(3).map_or("60", |m| m.as_str()).parse().unwrap();
-    let precomposed: bool = caps.get(4).map_or("", |m| m.as_str()) == "-precomposed";
-    let icon = Icon {
-        width: width,
-        height: height,
-        precomposed: precomposed,
-    };
+    let icon = parse_icon_path(&req.path());
 
     let icon_img = generate_icon(&icon);
 
@@ -52,6 +41,20 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
     let mut headers = Headers::new();
     headers.set("content-type", "image/png")?;
     Ok(response.with_headers(headers))
+}
+
+fn parse_icon_path(path: &str) -> Icon {
+    let re = Regex::new(r"^/apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
+    let caps = re.captures(&path).unwrap();
+
+    let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
+    let height: u32 = caps.get(3).map_or("60", |m| m.as_str()).parse().unwrap();
+    let precomposed: bool = caps.get(4).map_or("", |m| m.as_str()) == "-precomposed";
+    Icon {
+        width: width,
+        height: height,
+        precomposed: precomposed,
+    }
 }
 
 fn generate_icon(icon: &Icon) -> DynamicImage {
