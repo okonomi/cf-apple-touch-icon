@@ -1,7 +1,7 @@
-use worker::*;
-use image::{ImageOutputFormat, DynamicImage};
-use std::io::Cursor;
+use image::{DynamicImage, ImageOutputFormat};
 use regex::Regex;
+use std::io::Cursor;
+use worker::*;
 
 mod utils;
 
@@ -31,7 +31,8 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
     let icon = generate_icon(width, height);
 
     let mut result_buf: Vec<u8> = Vec::new();
-    icon.write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png).expect("io error");
+    icon.write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png)
+        .expect("io error");
 
     let response = Response::from_bytes(result_buf).unwrap();
     let mut headers = Headers::new();
@@ -40,9 +41,9 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
 }
 
 fn generate_icon(width: u32, height: u32) -> DynamicImage {
-  let bytes = std::include_bytes!("../res/icon.jpg");
-  let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
+    let bytes = std::include_bytes!("../res/icon.jpg");
+    let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
 
-  let img2 = img.resize(width, height, image::imageops::FilterType::Triangle);
-  img2
+    let img2 = img.resize(width, height, image::imageops::FilterType::Triangle);
+    img2
 }
