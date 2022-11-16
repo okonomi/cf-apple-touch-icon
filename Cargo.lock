@@ -71,6 +71,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec8a7b6a70fde80372154c65702f00a0f56f3e1c36abbc6c440484be248856db"
 
 [[package]]
+name = "cf-apple-touch-icon"
+version = "0.0.0"
+dependencies = [
+ "cfg-if 0.1.10",
+ "console_error_panic_hook",
+ "image",
+ "regex",
+ "serde_json",
+ "worker",
+]
+
+[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -189,18 +201,6 @@ name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
-
-[[package]]
-name = "edge-apple-touch-icon"
-version = "0.0.0"
-dependencies = [
- "cfg-if 0.1.10",
- "console_error_panic_hook",
- "image",
- "regex",
- "serde_json",
- "worker",
-]
 
 [[package]]
 name = "either"

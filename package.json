@@ -2,7 +2,7 @@
 	"private": true,
 	"version": "0.0.0",
 	"scripts": {
-		"deploy": "npx wrangler publish --name edge-apple-touch-icon",
+		"deploy": "npx wrangler publish --name cf-apple-touch-icon",
 		"dev": "npx wrangler dev --local"
 	},
 	"devDependencies": {
