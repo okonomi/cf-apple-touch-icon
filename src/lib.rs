@@ -33,6 +33,10 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
         Err(e) => return Response::error(format!("{:?}", e), 400),
     };
 
+    if !validate_icon(&icon) {
+        return Response::error("err", 400);
+    }
+
     let icon_img = generate_icon(&icon);
 
     let mut result_buf: Vec<u8> = Vec::new();
@@ -58,6 +62,20 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
         height,
         precomposed,
     })
+}
+
+fn validate_icon(icon: &Icon) -> bool {
+    if icon.width < 1 || icon.width > 500 {
+        return false;
+    }
+    if icon.height < 1 || icon.height > 500 {
+        return false;
+    }
+    if icon.width != icon.height {
+        return false;
+    }
+
+    true
 }
 
 fn generate_icon(icon: &Icon) -> DynamicImage {
