@@ -22,11 +22,15 @@ fn log_request(req: &Request) {
 }
 
 #[event(fetch)]
-pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Response> {
+pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
 
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
+
+    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT")?;
+    console_debug!("{:?}", kv.list());
+    let source = kv.get("icon.jpg").bytes().await?.unwrap();
 
     let icon = match parse_icon_path(&req.path()) {
         Ok(icon) => icon,
@@ -37,7 +41,7 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
         return Response::error("err", 400);
     }
 
-    let icon_img = generate_icon(&icon);
+    let icon_img = generate_icon(&icon, &source);
 
     let response = make_response(&icon_img);
 
@@ -72,9 +76,8 @@ fn validate_icon(icon: &Icon) -> bool {
     true
 }
 
-fn generate_icon(icon: &Icon) -> DynamicImage {
-    let bytes = std::include_bytes!("../res/icon.jpg");
-    let img = image::load_from_memory_with_format(bytes, image::ImageFormat::Jpeg).unwrap();
+fn generate_icon(icon: &Icon, source: &Vec<u8>) -> DynamicImage {
+    let img = image::load_from_memory_with_format(source, image::ImageFormat::Jpeg).unwrap();
 
     let img2 = img.resize(
         icon.width,
@@ -85,13 +88,13 @@ fn generate_icon(icon: &Icon) -> DynamicImage {
 }
 
 fn make_response(icon_img: &DynamicImage) -> Response {
-  let mut result_buf: Vec<u8> = Vec::new();
-  icon_img
-      .write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png)
-      .expect("io error");
+    let mut result_buf: Vec<u8> = Vec::new();
+    icon_img
+        .write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png)
+        .expect("io error");
 
-  let response = Response::from_bytes(result_buf).unwrap();
-  let mut headers = Headers::new();
-  headers.set("content-type", "image/png");
-  response.with_headers(headers)
+    let response = Response::from_bytes(result_buf).unwrap();
+    let mut headers = Headers::new();
+    headers.set("content-type", "image/png");
+    response.with_headers(headers)
 }
