@@ -8,7 +8,6 @@ mod utils;
 struct Icon {
     width: u32,
     height: u32,
-    precomposed: bool,
 }
 
 fn log_request(req: &Request) {
@@ -60,12 +59,7 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
 
     let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
     let height: u32 = caps.get(3).map_or("60", |m| m.as_str()).parse().unwrap();
-    let precomposed: bool = caps.get(4).map_or("", |m| m.as_str()) == "-precomposed";
-    Ok(Icon {
-        width,
-        height,
-        precomposed,
-    })
+    Ok(Icon { width, height })
 }
 
 fn validate_icon(icon: &Icon) -> Result<()> {
