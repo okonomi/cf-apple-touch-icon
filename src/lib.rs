@@ -28,10 +28,6 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT")?;
-    console_debug!("{:?}", kv.list());
-    let source = kv.get("icon.jpg").bytes().await?.unwrap();
-
     let icon = match parse_icon_path(&req.path()) {
         Ok(icon) => icon,
         Err(e) => return Response::error(format!("{:?}", e), 400),
@@ -41,11 +37,19 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         return Response::error("err", 400);
     }
 
-    let icon_img = generate_icon(&icon, &source);
-
+    let source_icon = load_source_icon(&env).await;
+    let icon_img = generate_icon(&icon, &source_icon);
     let response = make_response(&icon_img);
 
     Ok(response)
+}
+
+async fn load_source_icon(env: &Env) -> DynamicImage {
+    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT").unwrap();
+    let source = kv.get("icon.jpg").bytes().await.unwrap().unwrap();
+
+    let img = image::load_from_memory_with_format(&source, image::ImageFormat::Jpeg).unwrap();
+    img
 }
 
 fn parse_icon_path(path: &str) -> Result<Icon> {
@@ -76,15 +80,12 @@ fn validate_icon(icon: &Icon) -> bool {
     true
 }
 
-fn generate_icon(icon: &Icon, source: &Vec<u8>) -> DynamicImage {
-    let img = image::load_from_memory_with_format(source, image::ImageFormat::Jpeg).unwrap();
-
-    let img2 = img.resize(
+fn generate_icon(icon: &Icon, source: &DynamicImage) -> DynamicImage {
+    source.resize(
         icon.width,
         icon.height,
         image::imageops::FilterType::Triangle,
-    );
-    img2
+    )
 }
 
 fn make_response(icon_img: &DynamicImage) -> Response {
