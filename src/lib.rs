@@ -21,7 +21,7 @@ fn log_request(req: &Request) {
     );
 }
 
-#[event(fetch)]
+#[event(fetch, respond_with_errors)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
 
@@ -33,8 +33,8 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         Err(e) => return Response::error(format!("{:?}", e), 400),
     };
 
-    if !validate_icon(&icon) {
-        return Response::error("err", 400);
+    if let Err(e) = validate_icon(&icon) {
+        return Response::error(e.to_string(), 403);
     }
 
     let source_icon = load_source_icon(&env).await;
@@ -66,18 +66,18 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
     })
 }
 
-fn validate_icon(icon: &Icon) -> bool {
+fn validate_icon(icon: &Icon) -> Result<()> {
     if icon.width < 1 || icon.width > 500 {
-        return false;
+        return Err(Error::from("invalid width"));
     }
     if icon.height < 1 || icon.height > 500 {
-        return false;
+        return Err(Error::from("invalid height"));
     }
     if icon.width != icon.height {
-        return false;
+        return Err(Error::from("invalid size"));
     }
 
-    true
+    Ok(())
 }
 
 fn generate_icon(icon: &Icon, source: &DynamicImage) -> DynamicImage {
