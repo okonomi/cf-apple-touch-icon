@@ -28,7 +28,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    let icon = match parse_icon_path(&req.path()) {
+    let icon = match parse_icon_path(&req.path().trim_start_matches("/")) {
         Ok(icon) => icon,
         Err(e) => return Response::error(e.to_string(), 400),
     };
@@ -55,7 +55,7 @@ async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
 }
 
 fn parse_icon_path(path: &str) -> Result<Icon> {
-    let re = Regex::new(r"^/apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
+    let re = Regex::new(r"^apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
     let caps = re.captures(&path).ok_or("erorr".to_owned())?;
 
     let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
