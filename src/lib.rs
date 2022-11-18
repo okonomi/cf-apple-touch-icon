@@ -39,7 +39,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
     let source_icon = load_source_icon(&env).await;
     let icon_img = generate_icon(&icon, &source_icon);
-    let response = make_response(&icon_img);
+    let response = make_response(&icon_img)?;
 
     Ok(response)
 }
@@ -88,14 +88,13 @@ fn generate_icon(icon: &Icon, source: &DynamicImage) -> DynamicImage {
     )
 }
 
-fn make_response(icon_img: &DynamicImage) -> Response {
-    let mut result_buf: Vec<u8> = Vec::new();
+fn make_response(icon_img: &DynamicImage) -> Result<Response> {
+    let mut buf: Vec<u8> = Vec::new();
     icon_img
-        .write_to(&mut Cursor::new(&mut result_buf), ImageOutputFormat::Png)
-        .expect("io error");
+        .write_to(&mut Cursor::new(&mut buf), ImageOutputFormat::Png)
+        .map_err(|e| Error::from(e.to_string()))?;
 
-    let response = Response::from_bytes(result_buf).unwrap();
-    let mut headers = Headers::new();
-    headers.set("content-type", "image/png");
-    response.with_headers(headers)
+    let mut response = Response::from_bytes(buf)?;
+    response.headers_mut().set("content-type", "image/png")?;
+    Ok(response)
 }
