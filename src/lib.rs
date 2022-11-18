@@ -30,7 +30,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
     let icon = match parse_icon_path(&req.path()) {
         Ok(icon) => icon,
-        Err(e) => return Response::error(format!("{:?}", e), 400),
+        Err(e) => return Response::error(e.to_string(), 400),
     };
 
     if let Err(e) = validate_icon(&icon) {
