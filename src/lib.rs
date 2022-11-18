@@ -43,16 +43,6 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     Ok(response)
 }
 
-async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
-    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT")?;
-    let source = kv.get("icon.jpg").bytes().await?.ok_or("erorr")?;
-
-    let img = image::load_from_memory_with_format(&source, image::ImageFormat::Jpeg)
-        .map_err(|e| Error::from(e.to_string()))?;
-
-    Ok(img)
-}
-
 fn parse_icon_path(path: &str) -> Result<Icon> {
     let re = Regex::new(r"^apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
     let caps = re.captures(&path).ok_or("erorr".to_owned())?;
@@ -74,6 +64,16 @@ fn validate_icon(icon: &Icon) -> Result<()> {
     }
 
     Ok(())
+}
+
+async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
+    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT")?;
+    let source = kv.get("icon.jpg").bytes().await?.ok_or("erorr")?;
+
+    let img = image::load_from_memory_with_format(&source, image::ImageFormat::Jpeg)
+        .map_err(|e| Error::from(e.to_string()))?;
+
+    Ok(img)
 }
 
 fn generate_icon(icon: &Icon, source: &DynamicImage) -> DynamicImage {
