@@ -37,19 +37,21 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         return Response::error(e.to_string(), 403);
     }
 
-    let source_icon = load_source_icon(&env).await;
+    let source_icon = load_source_icon(&env).await?;
     let icon_img = generate_icon(&icon, &source_icon);
     let response = make_response(&icon_img)?;
 
     Ok(response)
 }
 
-async fn load_source_icon(env: &Env) -> DynamicImage {
-    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT").unwrap();
-    let source = kv.get("icon.jpg").bytes().await.unwrap().unwrap();
+async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
+    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT")?;
+    let source = kv.get("icon.jpg").bytes().await?.ok_or("erorr")?;
 
-    let img = image::load_from_memory_with_format(&source, image::ImageFormat::Jpeg).unwrap();
-    img
+    let img = image::load_from_memory_with_format(&source, image::ImageFormat::Jpeg)
+        .map_err(|e| Error::from(e.to_string()))?;
+
+    Ok(img)
 }
 
 fn parse_icon_path(path: &str) -> Result<Icon> {
