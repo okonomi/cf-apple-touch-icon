@@ -10,6 +10,22 @@ struct Icon {
     height: u32,
 }
 
+impl Icon {
+    fn validate(&self) -> Result<()> {
+        if self.width < 1 || self.width > 500 {
+            return Err(Error::from("invalid width"));
+        }
+        if self.height < 1 || self.height > 500 {
+            return Err(Error::from("invalid height"));
+        }
+        if self.width != self.height {
+            return Err(Error::from("invalid size"));
+        }
+
+        Ok(())
+    }
+}
+
 fn log_request(req: &Request) {
     console_log!(
         "{} - [{}], located at: {:?}, within: {}",
@@ -32,7 +48,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         Err(e) => return Response::error(e.to_string(), 400),
     };
 
-    if let Err(e) = validate_icon(&icon) {
+    if let Err(e) = icon.validate() {
         return Response::error(e.to_string(), 403);
     }
 
@@ -50,20 +66,6 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
     let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
     let height: u32 = caps.get(3).map_or("60", |m| m.as_str()).parse().unwrap();
     Ok(Icon { width, height })
-}
-
-fn validate_icon(icon: &Icon) -> Result<()> {
-    if icon.width < 1 || icon.width > 500 {
-        return Err(Error::from("invalid width"));
-    }
-    if icon.height < 1 || icon.height > 500 {
-        return Err(Error::from("invalid height"));
-    }
-    if icon.width != icon.height {
-        return Err(Error::from("invalid size"));
-    }
-
-    Ok(())
 }
 
 async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
