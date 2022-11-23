@@ -52,9 +52,16 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         return Response::error(e.to_string(), 403);
     }
 
-    let source_icon = load_source_icon(&env).await?;
-    let icon_img = generate_icon(&icon, &source_icon);
-    let response = make_response(&icon_img)?;
+    let cache = Cache::default();
+    let key = req.url()?.to_string();
+    let response;
+    if let Some(resp) = cache.get(&key, true).await? {
+        response = resp;
+    } else {
+        let source_icon = load_source_icon(&env).await?;
+        let icon_img = generate_icon(&icon, &source_icon);
+        response = make_response(&icon_img)?;
+    }
 
     Ok(response)
 }
