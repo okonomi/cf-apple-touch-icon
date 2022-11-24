@@ -98,16 +98,10 @@ static MANIFEST_MAP: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
 });
 
 async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
-    // let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT_MANIFEST")?;
-    // let source = kv.get("icon.jpg").text().await?.ok_or("error");
-    // console_debug!("manifest icon.jpg: {:?}", source);
-
     let path = MANIFEST_MAP.get("icon.jpg").unwrap_or(&"icon.jpg");
     console_debug!("manifest icon.jpg: {}", path);
 
-    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT")?;
-    let ret = kv.list().execute().await?;
-    console_log!("{:?}", ret.keys);
+    let kv = env.kv("__STATIC_CONTENT")?;
     let source = kv
         .get(path)
         .bytes()
