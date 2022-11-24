@@ -3,7 +3,7 @@ main = "build/worker/shim.mjs"
 compatibility_date = "2022-01-20"
 
 [vars]
-WORKERS_RS_VERSION = "0.0.11"
+WORKERS_RS_VERSION = "0.0.12"
 
 [build]
 command = "cargo install -q --git https://github.com/okonomi/workers-rs --branch worker-build-static-content-manifest && worker-build --release"
