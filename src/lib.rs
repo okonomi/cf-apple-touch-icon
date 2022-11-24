@@ -2,6 +2,9 @@ use image::{DynamicImage, ImageOutputFormat};
 use regex::Regex;
 use std::io::Cursor;
 use worker::*;
+use worker::wasm_bindgen::prelude::*;
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
 
 mod utils;
 
@@ -83,10 +86,24 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
     Ok(Icon { width, height })
 }
 
+#[wasm_bindgen(module = "__STATIC_CONTENT_MANIFEST")]
+extern "C" {
+    #[wasm_bindgen(js_name = "default")]
+    static MANIFEST: String;
+}
+
+static MANIFEST_MAP: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
+    serde_json::from_str::<HashMap<&str, &str>>(&MANIFEST)
+        .unwrap_or_default()
+});
+
 async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
-    let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT")?;
+    let path = MANIFEST_MAP.get("icon.jpg").unwrap_or(&"icon.jpg");
+    console_debug!("manifest icon.jpg: {}", path);
+
+    let kv = env.kv("__STATIC_CONTENT")?;
     let source = kv
-        .get("icon.jpg")
+        .get(path)
         .bytes()
         .await?
         .ok_or("Failed to load source icon image")?;
