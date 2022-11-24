@@ -74,7 +74,9 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 
 fn parse_icon_path(path: &str) -> Result<Icon> {
     let re = Regex::new(r"^apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
-    let caps = re.captures(&path).ok_or(format!("Unmached path: {}", path))?;
+    let caps = re
+        .captures(&path)
+        .ok_or(format!("Unmached path: {}", path))?;
 
     let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
     let height: u32 = caps.get(3).map_or("60", |m| m.as_str()).parse().unwrap();
@@ -83,7 +85,11 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
 
 async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
     let kv = worker::kv::KvStore::from_this(&env, "__STATIC_CONTENT")?;
-    let source = kv.get("icon.jpg").bytes().await?.ok_or("Failed to load source icon image")?;
+    let source = kv
+        .get("icon.jpg")
+        .bytes()
+        .await?
+        .ok_or("Failed to load source icon image")?;
 
     let img = image::load_from_memory_with_format(&source, image::ImageFormat::Jpeg)
         .map_err(|e| Error::from(e.to_string()))?;
