@@ -1,10 +1,10 @@
 use image::{DynamicImage, ImageOutputFormat};
-use regex::Regex;
-use std::io::Cursor;
-use worker::*;
-use worker::wasm_bindgen::prelude::*;
 use once_cell::sync::Lazy;
+use regex::Regex;
 use std::collections::HashMap;
+use std::io::Cursor;
+use worker::wasm_bindgen::prelude::*;
+use worker::*;
 
 mod utils;
 
@@ -92,10 +92,8 @@ extern "C" {
     static MANIFEST: String;
 }
 
-static MANIFEST_MAP: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
-    serde_json::from_str::<HashMap<&str, &str>>(&MANIFEST)
-        .unwrap_or_default()
-});
+static MANIFEST_MAP: Lazy<HashMap<&str, &str>> =
+    Lazy::new(|| serde_json::from_str::<HashMap<&str, &str>>(&MANIFEST).unwrap_or_default());
 
 async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
     let path = MANIFEST_MAP.get("icon.jpg").unwrap_or(&"icon.jpg");
