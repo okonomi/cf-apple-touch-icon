@@ -6,7 +6,4 @@ compatibility_date = "2022-01-20"
 WORKERS_RS_VERSION = "0.0.12"
 
 [build]
-command = "cargo install worker-build -q --git https://github.com/okonomi/workers-rs --branch worker-build-static-content-manifest && worker-build --release"
-
-[site]
-bucket = "./res"
+command = "cargo install -q worker-build --version 0.0.8 && worker-build --release"

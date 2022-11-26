@@ -1,9 +1,6 @@
 use image::{DynamicImage, ImageOutputFormat};
-use once_cell::sync::Lazy;
 use regex::Regex;
-use std::collections::HashMap;
 use std::io::Cursor;
-use worker::wasm_bindgen::prelude::*;
 use worker::*;
 
 mod utils;
@@ -40,7 +37,7 @@ fn log_request(req: &Request) {
 }
 
 #[event(fetch, respond_with_errors)]
-pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
+pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
 
     // Optionally, get more helpful error messages written to the console in the case of a panic.
@@ -64,9 +61,9 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         response = resp;
     } else {
         console_debug!("Cache MISS!");
-        let source_icon = load_source_icon(&env).await?;
-        let icon_img = generate_icon(&icon, &source_icon);
-        response = make_response(&icon_img)?;
+        let source_image = fetch_source_image().await?;
+        let icon_image = generate_icon(&icon, &source_image);
+        response = make_response(&icon_image)?;
 
         response.headers_mut().set("cache-control", "s-maxage=10")?;
         cache.put(key, response.cloned()?).await?;
@@ -86,25 +83,14 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
     Ok(Icon { width, height })
 }
 
-#[wasm_bindgen(module = "__STATIC_CONTENT_MANIFEST")]
-extern "C" {
-    #[wasm_bindgen(js_name = "default")]
-    static MANIFEST: String;
-}
+async fn fetch_source_image() -> Result<DynamicImage> {
+    let req = Request::new(
+        "https://ja.gravatar.com/userimage/146129889/1343f93e36171f9d09d7769524050b9d.jpeg",
+        Method::Get,
+    )?;
+    let mut res = Fetch::Request(req).send().await?;
 
-static MANIFEST_MAP: Lazy<HashMap<&str, &str>> =
-    Lazy::new(|| serde_json::from_str::<HashMap<&str, &str>>(&MANIFEST).unwrap_or_default());
-
-async fn load_source_icon(env: &Env) -> Result<DynamicImage> {
-    let path = MANIFEST_MAP.get("icon.jpg").unwrap_or(&"icon.jpg");
-    console_debug!("manifest icon.jpg: {}", path);
-
-    let kv = env.kv("__STATIC_CONTENT")?;
-    let source = kv
-        .get(path)
-        .bytes()
-        .await?
-        .ok_or("Failed to load source icon image")?;
+    let source = res.bytes().await?;
 
     let img = image::load_from_memory_with_format(&source, image::ImageFormat::Jpeg)
         .map_err(|e| Error::from(e.to_string()))?;
