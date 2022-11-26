@@ -91,22 +91,27 @@ async fn fetch_source_image(source_image_url: &str) -> Result<DynamicImage> {
     let source = res.bytes().await?;
 
     let mime = res.headers().get("content-type")?;
-    console_debug!("mime type = {:?}", mime);
 
     let format = match mime {
         None => return Err(Error::from("err")),
-        Some(t) => match t.as_str() {
-            "image/jpeg" => ImageFormat::Jpeg,
-            "image/png" => ImageFormat::Png,
-            "image/gif" => ImageFormat::Gif,
-            _ => return Err(Error::from("err")),
-        },
+        Some(t) => detect_image_format(t.as_str())?,
     };
 
     let img = image::load_from_memory_with_format(&source, format)
         .map_err(|e| Error::from(e.to_string()))?;
 
     Ok(img)
+}
+
+fn detect_image_format(content_type: &str) -> Result<ImageFormat> {
+    let format = match content_type {
+        "image/jpeg" => ImageFormat::Jpeg,
+        "image/png" => ImageFormat::Png,
+        "image/gif" => ImageFormat::Gif,
+        _ => return Err(Error::from("err")),
+    };
+
+    Ok(format)
 }
 
 fn generate_icon(icon: &Icon, source: &DynamicImage) -> DynamicImage {
