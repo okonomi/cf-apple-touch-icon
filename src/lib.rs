@@ -37,7 +37,7 @@ fn log_request(req: &Request) {
 }
 
 #[event(fetch, respond_with_errors)]
-pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Response> {
+pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
 
     // Optionally, get more helpful error messages written to the console in the case of a panic.
@@ -61,7 +61,8 @@ pub async fn main(req: Request, _env: Env, _ctx: worker::Context) -> Result<Resp
         response = resp;
     } else {
         console_debug!("Cache MISS!");
-        let source_image = fetch_source_image().await?;
+        let source_image_url = env.var("SOURCE_IMAGE_URL")?.to_string();
+        let source_image = fetch_source_image(&source_image_url).await?;
         let icon_image = generate_icon(&icon, &source_image);
         response = make_response(&icon_image)?;
 
@@ -83,11 +84,8 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
     Ok(Icon { width, height })
 }
 
-async fn fetch_source_image() -> Result<DynamicImage> {
-    let req = Request::new(
-        "https://ja.gravatar.com/userimage/146129889/1343f93e36171f9d09d7769524050b9d.jpeg",
-        Method::Get,
-    )?;
+async fn fetch_source_image(source_image_url: &str) -> Result<DynamicImage> {
+    let req = Request::new(source_image_url, Method::Get)?;
     let mut res = Fetch::Request(req).send().await?;
 
     let source = res.bytes().await?;

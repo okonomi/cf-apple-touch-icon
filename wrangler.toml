@@ -4,6 +4,7 @@ compatibility_date = "2022-01-20"
 
 [vars]
 WORKERS_RS_VERSION = "0.0.12"
+SOURCE_IMAGE_URL = "https://ja.gravatar.com/userimage/146129889/1343f93e36171f9d09d7769524050b9d.jpeg"
 
 [build]
 command = "cargo install -q worker-build --version 0.0.8 && worker-build --release"
