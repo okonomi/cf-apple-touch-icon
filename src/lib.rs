@@ -92,7 +92,7 @@ async fn fetch_source_image(source_image_url: &str) -> Result<DynamicImage> {
     let content_type = res.headers().get("content-type")?;
     let format = match content_type {
         Some(t) => detect_image_format(t.as_str())?,
-        None => return Err(Error::from("err")),
+        None => return Err(Error::from("Could not get content-type response header")),
     };
 
     let img = image::load_from_memory_with_format(&source, format)
@@ -106,7 +106,7 @@ fn detect_image_format(content_type: &str) -> Result<ImageFormat> {
         "image/jpeg" => ImageFormat::Jpeg,
         "image/png" => ImageFormat::Png,
         "image/gif" => ImageFormat::Gif,
-        _ => return Err(Error::from("err")),
+        _ => return Err(Error::from(format!("Unknown source image format: {}", content_type))),
     };
 
     Ok(format)
