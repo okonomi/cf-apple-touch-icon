@@ -77,7 +77,6 @@ dependencies = [
  "cfg-if",
  "console_error_panic_hook",
  "image",
- "once_cell",
  "regex",
  "serde_json",
  "worker",
