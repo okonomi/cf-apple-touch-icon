@@ -87,14 +87,12 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
 async fn fetch_source_image(source_image_url: &str) -> Result<DynamicImage> {
     let req = Request::new(source_image_url, Method::Get)?;
     let mut res = Fetch::Request(req).send().await?;
-
     let source = res.bytes().await?;
 
-    let mime = res.headers().get("content-type")?;
-
-    let format = match mime {
-        None => return Err(Error::from("err")),
+    let content_type = res.headers().get("content-type")?;
+    let format = match content_type {
         Some(t) => detect_image_format(t.as_str())?,
+        None => return Err(Error::from("err")),
     };
 
     let img = image::load_from_memory_with_format(&source, format)
