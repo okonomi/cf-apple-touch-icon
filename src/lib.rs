@@ -1,4 +1,4 @@
-use image::{DynamicImage, ImageOutputFormat};
+use image::{DynamicImage, ImageFormat, ImageOutputFormat};
 use regex::Regex;
 use std::io::Cursor;
 use worker::*;
@@ -87,13 +87,29 @@ fn parse_icon_path(path: &str) -> Result<Icon> {
 async fn fetch_source_image(source_image_url: &str) -> Result<DynamicImage> {
     let req = Request::new(source_image_url, Method::Get)?;
     let mut res = Fetch::Request(req).send().await?;
-
     let source = res.bytes().await?;
 
-    let img = image::load_from_memory_with_format(&source, image::ImageFormat::Jpeg)
+    let content_type = res.headers().get("content-type")?;
+    let format = match content_type {
+        Some(t) => detect_image_format(t.as_str())?,
+        None => return Err(Error::from("Could not get content-type response header")),
+    };
+
+    let img = image::load_from_memory_with_format(&source, format)
         .map_err(|e| Error::from(e.to_string()))?;
 
     Ok(img)
+}
+
+fn detect_image_format(content_type: &str) -> Result<ImageFormat> {
+    let format = match content_type {
+        "image/jpeg" => ImageFormat::Jpeg,
+        "image/png" => ImageFormat::Png,
+        "image/gif" => ImageFormat::Gif,
+        _ => return Err(Error::from(format!("Unknown source image format: {}", content_type))),
+    };
+
+    Ok(format)
 }
 
 fn generate_icon(icon: &Icon, source: &DynamicImage) -> DynamicImage {
