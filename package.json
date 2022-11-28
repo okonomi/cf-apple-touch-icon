@@ -1,11 +1,11 @@
 {
-	"private": true,
-	"version": "0.0.0",
-	"scripts": {
-		"deploy": "wrangler publish --name cf-apple-touch-icon",
-		"dev": "wrangler dev --local"
-	},
-	"devDependencies": {
-		"wrangler": "^2.4.4"
-	}
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "deploy": "wrangler publish --name cf-apple-touch-icon",
+    "dev": "wrangler dev --local"
+  },
+  "devDependencies": {
+    "wrangler": "^2.4.4"
+  }
 }
