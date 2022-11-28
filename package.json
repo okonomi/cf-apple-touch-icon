@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "deploy": "wrangler publish --name cf-apple-touch-icon",
-    "dev": "wrangler dev --local"
+    "dev": "wrangler dev --local",
+    "lint": "cargo clippy"
   },
   "devDependencies": {
     "wrangler": "^2.4.4"
