@@ -43,7 +43,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    let icon = match parse_icon_path(&req.path().trim_start_matches("/")) {
+    let icon = match parse_icon_path(&req.path().trim_start_matches('/')) {
         Ok(icon) => icon,
         Err(e) => return Response::error(e.to_string(), 400),
     };
