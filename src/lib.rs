@@ -43,7 +43,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // Optionally, get more helpful error messages written to the console in the case of a panic.
     utils::set_panic_hook();
 
-    let icon = match parse_icon_path(&req.path().trim_start_matches("/")) {
+    let icon = match parse_icon_path(req.path().trim_start_matches('/')) {
         Ok(icon) => icon,
         Err(e) => return Response::error(e.to_string(), 400),
     };
@@ -76,7 +76,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 fn parse_icon_path(path: &str) -> Result<Icon> {
     let re = Regex::new(r"^apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
     let caps = re
-        .captures(&path)
+        .captures(path)
         .ok_or(format!("Unmached path: {}", path))?;
 
     let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
@@ -92,11 +92,9 @@ async fn fetch_source_image(source_image_url: &str) -> Result<DynamicImage> {
     let content_type = res
         .headers()
         .get("content-type")?
-        .ok_or(Error::from("Could not get content-type response header"))?;
-    let format = ImageFormat::from_mime_type(content_type.as_str()).ok_or(Error::from(format!(
-        "Unknown source image format: {}",
-        content_type
-    )))?;
+        .ok_or_else(|| Error::from("Could not get content-type response header"))?;
+    let format = ImageFormat::from_mime_type(content_type.as_str())
+        .ok_or_else(|| Error::from(format!("Unknown source image format: {}", content_type)))?;
 
     let img = image::load_from_memory_with_format(&source, format)
         .map_err(|e| Error::from(e.to_string()))?;
