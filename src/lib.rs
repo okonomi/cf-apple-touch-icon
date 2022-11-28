@@ -76,7 +76,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
 fn parse_icon_path(path: &str) -> Result<Icon> {
     let re = Regex::new(r"^apple-touch-icon(-(\d+)x(\d+))?(-precomposed)?\.png").unwrap();
     let caps = re
-        .captures(&path)
+        .captures(path)
         .ok_or(format!("Unmached path: {}", path))?;
 
     let width: u32 = caps.get(2).map_or("60", |m| m.as_str()).parse().unwrap();
