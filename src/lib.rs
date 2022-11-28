@@ -92,11 +92,9 @@ async fn fetch_source_image(source_image_url: &str) -> Result<DynamicImage> {
     let content_type = res
         .headers()
         .get("content-type")?
-        .ok_or(Error::from("Could not get content-type response header"))?;
-    let format = ImageFormat::from_mime_type(content_type.as_str()).ok_or(Error::from(format!(
-        "Unknown source image format: {}",
-        content_type
-    )))?;
+        .ok_or_else(|| Error::from("Could not get content-type response header"))?;
+    let format = ImageFormat::from_mime_type(content_type.as_str())
+        .ok_or_else(|| Error::from(format!("Unknown source image format: {}", content_type)))?;
 
     let img = image::load_from_memory_with_format(&source, format)
         .map_err(|e| Error::from(e.to_string()))?;
